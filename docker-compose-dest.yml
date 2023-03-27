@@ -1,0 +1,47 @@
+version: "3.7"
+services:
+
+  zk_dest:
+    image: confluentinc/cp-zookeeper:7.2.2
+    hostname: zk_dest
+    container_name: zk_dest
+    environment:
+      ZOOKEEPER_SERVER_ID: 1
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+      ZOOKEEPER_INIT_LIMIT: 5
+      ZOOKEEPER_SYNC_LIMIT: 2
+    networks:
+      - net_desc
+
+  broker_dest:
+    image: confluentinc/cp-server:7.2.2
+    hostname: broker_dest
+    container_name: broker_dest
+    environment:
+      KAFKA_ADVERTISED_LISTENERS: LISTENER_DOCKER_INTERNAL://broker_dest:9092,LISTENER_DOCKER_EXTERNAL://broker_dest:29092,LISTENER_DOCKER_EXTERNAL2://broker_dest:29093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: LISTENER_DOCKER_INTERNAL:PLAINTEXT,LISTENER_DOCKER_EXTERNAL:PLAINTEXT,LISTENER_DOCKER_EXTERNAL2:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: LISTENER_DOCKER_INTERNAL
+      KAFKA_ZOOKEEPER_CONNECT: "zk_dest:2181"
+      KAFKA_BROKER_ID: 1
+      KAFKA_LOG4J_LOGGERS: "kafka.controller=ERROR,kafka.producer.async.DefaultEventHandler=ERROR,state.change.logger=ERROR,org.apache.kafka.clients.NetworkClient=ERROR"
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+      KAFKA_CONFLUENT_LICENSE_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_CONFLUENT_BALANCER_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_CONFLUENT_CLUSTER_LINK_ENABLE: "true"
+      KAFKA_PASSWORD_ENCODER_SECRET: "pass12345"
+    depends_on:
+      - zk_dest
+    volumes:
+      - ./configs/:/configs/
+    networks:
+      - net_desc
+      - net_cl
+
+networks:
+  net_cl:
+  net_src:
+  net_desc:
